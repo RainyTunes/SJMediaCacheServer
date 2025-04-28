@@ -10,7 +10,8 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @interface RainyHLSHooker : NSObject
-+ (NSString *)hookPlaylist:(NSString *)playlist startTime:(NSTimeInterval)startTime endTime:(NSTimeInterval)endTime;
++ (void)markLoop:(NSURL *)url startLoopTime:(double)startLoopTime loopDuration:(double)loopDuration;
++ (NSString *)hookPlaylist:(NSString *)playlist forURL:(NSURL *)url;
 @end
 
 NS_ASSUME_NONNULL_END

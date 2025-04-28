@@ -9,43 +9,86 @@
 
 @implementation RainyHLSHooker
 
+// Static dictionary to cache loop parameters for multiple URLs
+static NSMutableDictionary<NSString *, NSDictionary *> *loopCache = nil;
+
+// Helper method to initialize the loop cache if needed
++ (void)initializeLoopCache {
+    if (!loopCache) {
+        loopCache = [NSMutableDictionary dictionary];
+    }
+}
+
 /**
- * Trims HLS playlist to cover the desired time interval.
+ * Stores the loop parameters for the given URL.
  *
- * The method accepts a start time and an end time. Segments prior to the start time
- * are skipped. When processing segments, if adding the current segment (EXTINF and its
- * corresponding TS file) causes the cumulative duration to exceed the specified end time,
- * the current segment is skipped (provided that at least one segment has already been processed),
- * and further segments are ignored.
- *
- * If no segment has been processed so far, the first segment will be added even if it
- * exceeds the end time.
- *
- * Example:
- * Input:
- * #EXTM3U
- * #EXT-X-VERSION:3
- * #EXTINF:10.0,
- * segment1.ts
- * #EXTINF:10.0,
- * segment2.ts
- * #EXT-X-ENDLIST
- *
- * For startTime = 0 and endTime = 8, the output will be:
- *
- * #EXTM3U
- * #EXT-X-VERSION:3
- * #EXTINF:10.0,
- * segment1.ts
- * #EXT-X-ENDLIST
+ * @param url The URL for VOD or loop.
+ * @param startLoopTime The starting loop time in milliseconds.
+ * @param loopDuration The duration of the loop in milliseconds.
+ */
++ (void)markLoop:(NSURL *)url startLoopTime:(double)startLoopTime loopDuration:(double)loopDuration {
+    [self initializeLoopCache];
+    // Convert ms to seconds
+    NSTimeInterval startTime = startLoopTime / 1000.0;
+    NSTimeInterval endTime = startTime + loopDuration / 1000.0;
+    NSDictionary *params = @{@"startTime": @(startTime),
+                             @"endTime": @(endTime)};
+    // Save the loop info using URL's absolute string as the key
+    [loopCache setObject:params forKey:url.absoluteString];
+}
+
+/**
+ * Trims HLS playlist using the stored loop parameters for the provided URL.
+ * If no loop information is found for the URL, only process the first TS,
+ * processing only the first EXTINF and its corresponding TS file.
  *
  * @param playlist The original HLS playlist string.
- * @param startTime The desired start time (in seconds).
- * @param endTime The desired end time (in seconds).
- * @return A new playlist string trimmed to cover the specified time interval.
+ * @param url The URL used to lookup loop parameters.
+ * @return A new playlist string trimmed to the specified time interval.
  */
-+ (NSString *)hookPlaylist:(NSString *)playlist startTime:(NSTimeInterval)startTime endTime:(NSTimeInterval)endTime {
-    // Validate input and skip playlists that shouldn't be modified.
++ (NSString *)hookPlaylist:(NSString *)playlist forURL:(NSURL *)url {
+    [self initializeLoopCache];
+    NSDictionary *params = [loopCache objectForKey:url.absoluteString];
+    
+    // If no loop cache exists, only process the first TS.
+    if (!params) {
+        NSMutableString *result = [NSMutableString string];
+        NSArray *lines = [playlist componentsSeparatedByCharactersInSet:[NSCharacterSet newlineCharacterSet]];
+        NSInteger count = lines.count;
+        BOOL extinfFound = NO;
+        
+        // Append header lines until the first EXTINF is encountered.
+        for (NSInteger i = 0; i < count; i++) {
+            NSString *line = lines[i];
+            if ([line hasPrefix:@"#EXTINF:"]) {
+                extinfFound = YES;
+                [result appendFormat:@"%@\n", line];
+                // Append the corresponding TS file (skip blank lines).
+                if (i + 1 < count) {
+                    NSString *tsLine = lines[i + 1];
+                    while ([tsLine stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]].length == 0 && i + 1 < count - 1) {
+                        i++;
+                        tsLine = lines[i + 1];
+                    }
+                    [result appendFormat:@"%@\n", tsLine];
+                }
+                break;
+            } else {
+                if (![line hasPrefix:@"#EXT-X-ENDLIST"]) {
+                    [result appendFormat:@"%@\n", line];
+                }
+            }
+        }
+        
+        [result appendString:@"#EXT-X-ENDLIST\n"];
+        return result;
+    }
+    
+    // Cached logic: retrieve the desired time range from cache.
+    NSTimeInterval startTime = [params[@"startTime"] doubleValue];
+    NSTimeInterval endTime = [params[@"endTime"] doubleValue];
+    
+    // Validate input and skip playlists that should not be modified.
     if (!playlist || ![playlist hasPrefix:@"#EXT"]) {
         return playlist;
     }
@@ -123,8 +166,7 @@
         // Append the corresponding TS file line (if available). Skip blank lines.
         if (i + 1 < count) {
             NSString *tsLine = lines[i + 1];
-            while ([tsLine stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]].length == 0
-                   && i + 1 < count - 1) {
+            while ([tsLine stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]].length == 0 && i + 1 < count - 1) {
                 i++;
                 tsLine = lines[i + 1];
             }
