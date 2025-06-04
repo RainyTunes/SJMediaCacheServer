@@ -10,8 +10,12 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @interface RainyHLSHooker : NSObject
-+ (void)markLoop:(NSURL *)url startLoopTime:(double)startLoopTime loopDuration:(double)loopDuration;
-+ (NSString *)hookPlaylist:(NSString *)playlist forURL:(NSURL *)url;
+/// Return loop params in seconds, or nil on miss.
+/// dict keys: @"startTime", @"endTime" (NSNumber, double seconds)
++ (nullable NSDictionary<NSString *, NSNumber *> *)loopParamsForOriginalURL:(NSURL *)originalURL;
+
++ (void)markVODLoop:(NSURL *)url startLoopTime:(double)startLoopTime loopDuration:(double)loopDuration;
++ (NSString *)hookPlaylist:(NSString *)playlist forOriginalURL:(NSURL *)originalURL;
 @end
 
 NS_ASSUME_NONNULL_END

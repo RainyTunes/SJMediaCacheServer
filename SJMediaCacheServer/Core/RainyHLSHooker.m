@@ -25,13 +25,18 @@ static NSMutableDictionary<NSString *, NSDictionary *> *loopCache = nil;
     loopCache = saved ? [saved mutableCopy] : [NSMutableDictionary dictionary];
 }
 
++ (NSDictionary<NSString *, NSNumber *> *)loopParamsForOriginalURL:(NSURL *)originalURL {
+    if (!originalURL) { return nil; }
+    [self initializeLoopCache];
+    return loopCache[[self normalizedKeyFromURL:originalURL]];
+}
+
 /// Normalise URL by removing the last path component.
 /// Example:
-/// …/chunklist_b1044100.m3u8  ->  …/e19d350d-2637-495a-94a5-064cd23680f5.smil
-+ (NSString *)normalizedKeyFromURL:(NSURL *)url {
-    if (!url) { return nil; }
++ (NSString *)normalizedKeyFromURL:(NSURL *)originalURL {
+    if (!originalURL) { return nil; }
     
-    NSURLComponents *components = [NSURLComponents componentsWithURL:url resolvingAgainstBaseURL:NO];
+    NSURLComponents *components = [NSURLComponents componentsWithURL:originalURL resolvingAgainstBaseURL:NO];
     components.query = nil;
     NSURL *urlWithoutQuery = components.URL;
     
@@ -42,45 +47,40 @@ static NSMutableDictionary<NSString *, NSDictionary *> *loopCache = nil;
 #pragma mark - Public API
 
 /// Quick check for cache hit / miss (after url normalisation)
-+ (BOOL)cacheHitForURL:(NSURL *)url {
++ (BOOL)cacheHitForURL:(NSURL *)originalURL {
     [self initializeLoopCache];
-    NSString *key = [self normalizedKeyFromURL:url];
+    NSString *key = [self normalizedKeyFromURL:originalURL];
     BOOL hit = (loopCache[key] != nil);
-    NSLog(@"RainyHLSHooker cacheHitForURL -- %@ cache for url = %@", hit ? @"HIT" : @"MISS", url);
     return hit;
 }
 
 /**
- * Stores the loop parameters for the given URL.
+ * Stores the loop parameters for the given VOD URL.
  *
- * @param url            The URL for VOD or loop.
+ * @param originalURL            The URL for VOD or loop.
  * @param startLoopTime  The starting loop time in milliseconds.
  * @param loopDuration   The duration of the loop in milliseconds.
  */
-+ (void)markLoop:(NSURL *)url startLoopTime:(double)startLoopTime loopDuration:(double)loopDuration {
-    if (!url) { return; }
++ (void)markVODLoop:(NSURL *)originalURL startLoopTime:(double)startLoopTime loopDuration :(double)loopDuration {
+    if (!originalURL) return;
     [self initializeLoopCache];
 
-    NSString *key = [self normalizedKeyFromURL:url];
+    NSString *key = [self normalizedKeyFromURL:originalURL];
+    NSDictionary *old = loopCache[key];
 
-    // Convert ms to seconds
-    NSTimeInterval startTime = startLoopTime / 1000.0;
-    NSTimeInterval endTime   = startTime + loopDuration / 1000.0;
+    const double eps = 1.0;                     // 1 ms tolerance
+    if (old &&
+        fabs([old[@"startLoopTime"] doubleValue] - startLoopTime) < eps &&
+        fabs([old[@"loopDuration"]  doubleValue] - loopDuration ) < eps) {
+        return;                                // identical → skip overwrite
+    }
 
-    NSDictionary *params = @{ @"startTime" : @(startTime),
-                              @"endTime"   : @(endTime) };
+    NSDictionary *params = @{ @"startLoopTime" : @(startLoopTime),
+                              @"loopDuration"  : @(loopDuration) };
 
-    BOOL willUpdate = ![loopCache[key] isEqual:params];
-    loopCache[key]  = params;
-
-    // Persist
+    loopCache[key] = params;
     [[NSUserDefaults standardUserDefaults] setObject:loopCache
                                               forKey:kRainyLoopCacheUDKey];
-    [[NSUserDefaults standardUserDefaults] synchronize];
-
-    if (willUpdate) {
-        NSLog(@"RainyHLSHooker markLoop -- UPDATE cache key = %@", key);
-    }
 }
 
 /**
@@ -88,16 +88,19 @@ static NSMutableDictionary<NSString *, NSDictionary *> *loopCache = nil;
  * If no loop information is found for the URL, only process the first TS.
  *
  * @param playlist The original HLS playlist string.
- * @param url      The URL used to lookup loop parameters.
+ * @param originalURL      The URL used to lookup loop parameters.
  * @return A new playlist string trimmed to the specified time interval.
  */
-+ (NSString *)hookPlaylist:(NSString *)playlist forURL:(NSURL *)url {
++ (NSString *)hookPlaylist:(NSString *)playlist forOriginalURL:(NSURL *)originalURL {
     [self initializeLoopCache];
-    NSString *key = [self normalizedKeyFromURL:url];
+    NSString *key = [self normalizedKeyFromURL:originalURL];
     NSDictionary *params = loopCache[key];
 
+    if ([originalURL.absoluteString containsString:@"LiveShow"] && ![playlist containsString:@"#EXT-X-ENDLIST"]) {
+        return [self hookLiveShowPlaylist:playlist forOriginalURL:originalURL];
+    }
+    
     if (!params) {
-        NSLog(@"RainyHLSHooker hookPlaylist -- MISS cache key = %@", key);
         // ------- original MISS logic, unchanged except logging -------
         NSMutableString *result = [NSMutableString string];
         NSArray *lines = [playlist componentsSeparatedByCharactersInSet:[NSCharacterSet newlineCharacterSet]];
@@ -128,11 +131,12 @@ static NSMutableDictionary<NSString *, NSDictionary *> *loopCache = nil;
         return result;
     }
 
-    NSLog(@"RainyHLSHooker hookPlaylist -- HIT cache key = %@", key);
-
-    // --------------- original HIT logic ---------------
-    NSTimeInterval startTime = [params[@"startTime"] doubleValue];
-    NSTimeInterval endTime   = [params[@"endTime"]   doubleValue];
+    // --------- read original ms values ---------
+    double startMs = [params[@"startLoopTime"] doubleValue];
+    double durMs   = [params[@"loopDuration"]  doubleValue];
+    double startTime = startMs / 1000.0;
+    double endTime   = (startMs + durMs) / 1000.0;
+    // -------------------------------------------
 
     if (!playlist || ![playlist hasPrefix:@"#EXT"]) return playlist;
     if ([playlist containsString:@"#EXT-X-STREAM-INF"]) return playlist;   // master
@@ -151,6 +155,7 @@ static NSMutableDictionary<NSString *, NSDictionary *> *loopCache = nil;
 
     double cumulative = 0.0;
     BOOL segmentAdded = NO;
+    double firstSegStart  = -1.0;  // real start of first kept segment
 
     for (NSInteger i = 0; i < count; i++) {
         NSString *line = lines[i];
@@ -170,7 +175,8 @@ static NSMutableDictionary<NSString *, NSDictionary *> *loopCache = nil;
             if (i + 1 < count) i++;  // skip ts
             continue;
         }
-        if (newCum > endTime && segmentAdded) break;
+
+        if (!segmentAdded) firstSegStart = cumulative;   // record first keep
 
         [result appendFormat:@"%@\n", line];
         if (i + 1 < count) {
@@ -184,10 +190,29 @@ static NSMutableDictionary<NSString *, NSDictionary *> *loopCache = nil;
             segmentAdded = YES;
         }
         cumulative = newCum;
+        
+        if (newCum > endTime && segmentAdded) break;
     }
 
     [result appendString:@"#EXT-X-ENDLIST\n"];
+    if (firstSegStart >= 0.0) {
+        double newStart  = startTime - firstSegStart;   // sec
+        double newStartMs = newStart * 1000.0;
+
+        NSMutableDictionary *newParams = [params mutableCopy];
+        newParams[@"hook_startTime"] = @(newStartMs);   // ms
+        loopCache[key] = newParams;
+        [[NSUserDefaults standardUserDefaults] setObject:loopCache
+                                                  forKey:kRainyLoopCacheUDKey];
+        [[NSUserDefaults standardUserDefaults] synchronize];
+    }
+
     return result;
 }
 
++ (NSString *)hookLiveShowPlaylist:(NSString *)playlist forOriginalURL:(NSURL *)originalURL {
+    NSMutableString *result = [playlist mutableCopy];
+    [result appendString:@"#EXT-X-ENDLIST\n"];
+    return result;
+}
 @end
