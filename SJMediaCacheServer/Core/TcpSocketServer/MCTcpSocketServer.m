@@ -59,6 +59,12 @@
     return self;
 }
 
+#ifdef SJDEBUG
+- (void)dealloc {
+    NSLog(@"%@<%p>: %d : %s", NSStringFromClass(self.class), self, __LINE__, sel_getName(_cmd));
+}
+#endif
+
 - (dispatch_queue_t)queue {
     return mQueue;
 }
@@ -83,7 +89,7 @@
     return [self createData:[string dataUsingEncoding:encoding]];
 }
 
-- (void)sendData:(dispatch_data_t)data
+- (void)sendData:(nullable dispatch_data_t)data
          context:(nw_content_context_t)context
       isComplete:(_Bool)isComplete
       completion:(nw_connection_send_completion_t)completion {
@@ -214,7 +220,8 @@ static NSString *MCErrorLogsFilePath;
     [self _logMsg:[NSString stringWithFormat:@"Start Server with Port: %u;", port]];
 #endif
     
-    __block dispatch_semaphore_t sync = dispatch_semaphore_create(0);
+    dispatch_semaphore_t sync = dispatch_semaphore_create(0);
+    __block dispatch_semaphore_t syncPtr = sync;
     char port_str[6];
     sprintf(port_str, "%hu", port);
 
@@ -278,7 +285,7 @@ static NSString *MCErrorLogsFilePath;
         }
         
         // 释放同步锁
-        if ( sync ) {
+        if ( syncPtr ) {
             switch (state) {
                 case nw_listener_state_invalid:
                 case nw_listener_state_waiting:
@@ -286,8 +293,8 @@ static NSString *MCErrorLogsFilePath;
                 case nw_listener_state_ready:
                 case nw_listener_state_failed:
                 case nw_listener_state_cancelled: {
-                    dispatch_semaphore_signal(sync);
-                    sync = nil;
+                    dispatch_semaphore_signal(syncPtr);
+                    syncPtr = nil;
                 }
                     break;
             }
