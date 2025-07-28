@@ -14,7 +14,7 @@
 #import "HLSTagConstants.h"
 
 @interface CustomPlaylistManager ()
-/// VOD循环配置管理器
+/// VOD 迴圈配置管理器 VOD loop configuration manager
 @property (nonatomic, strong) VODLoopConfigManager *vodLoopConfigManager;
 @end
 
@@ -41,12 +41,12 @@
 
 #pragma mark - VOD Loop Configuration
 
-/// 获取VOD循环配置
+/// 獲取 VOD 迴圈配置 Get VOD loop configuration
 - (nullable VODLoopConfig *)vodLoopConfigForURL:(NSURL *)originalURL {
     return [self.vodLoopConfigManager loopConfigForURL:originalURL];
 }
 
-/// 标记VOD循环参数
+/// 標記 VOD 迴圈參數 Mark VOD loop parameters
 - (void)markVODLoop:(NSURL *)url startLoopTime:(NSInteger)startLoopTime loopDuration:(NSInteger)loopDuration {
     [self.vodLoopConfigManager markVODLoop:url startLoopTime:startLoopTime loopDuration:loopDuration];
 }
@@ -54,38 +54,40 @@
 #pragma mark - Playlist Processing
 
 /**
- * 使用存储的循环参数裁剪HLS播放列表
- * 根据播放列表类型智能选择处理策略
+ * 使用儲存的迴圈參數裁剪 HLS 播放清單
+ * Use stored loop parameters to trim HLS playlist
+ * 根據播放清單類型智慧選擇處理策略
+ * Intelligently select processing strategy based on playlist type
  *
- * @param playlist    原始HLS播放列表字符串
- * @param originalURL 用于查找循环参数的URL
- * @return 处理后的播放列表字符串
+ * @param playlist    原始 HLS 播放清單字串 Original HLS playlist string
+ * @param originalURL 用於查找迴圈參數的 URL URL for finding loop parameters
+ * @return 處理後的播放清單字串 Processed playlist string
  */
 - (NSString *)processPlaylist:(NSString *)playlist forOriginalURL:(NSURL *)originalURL {
-    // 检查播放列表类型
+    // 檢查播放清單類型 Check playlist type
     HLSPlaylistType playlistType = [HLSPlaylistChecker checkPlaylistType:playlist url:originalURL];
     
     switch (playlistType) {
         case HLSPlaylistTypeLive:
-            // LiveShow播放列表处理
+            // LiveShow 播放清單處理 LiveShow playlist processing
             return [LiveShowPlaylistProcessor processLiveShowPlaylist:playlist originalURL:originalURL];
         case HLSPlaylistTypeMaster:
         case HLSPlaylistTypeUnknown:
-            // 这些类型直接返回原播放列表
+            // 這些類型直接返回原播放清單 These types return original playlist directly
             return playlist;
             
         case HLSPlaylistTypeVOD: {
-            // VOD播放列表处理
+            // VOD 播放清單處理 VOD playlist processing
             VODLoopConfig *config = [self.vodLoopConfigManager loopConfigForURL:originalURL];
             
             if (config) {
-                // 有循环配置，使用循环处理
+                // 有迴圈配置，使用迴圈處理 Has loop config, use loop processing
                 return [VODPlaylistProcessor processVODPlaylist:playlist 
                                                      withConfig:config 
                                                     originalURL:originalURL
                                                   configManager:self.vodLoopConfigManager];
             } else {
-                // 无循环配置，降级处理（只保留第一个片段）
+                // 無迴圈配置，降級處理（只保留第一個片段）No loop config, fallback processing (keep only first segment)
                 return [VODPlaylistProcessor processFirstSegmentOnlyPlaylist:playlist];
             }
         }
@@ -93,7 +95,5 @@
     
     return playlist;
 }
-
-
 
 @end

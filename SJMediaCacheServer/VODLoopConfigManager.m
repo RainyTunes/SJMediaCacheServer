@@ -8,13 +8,13 @@
 #import "VODLoopConfigManager.h"
 
 @interface VODLoopConfigManager ()
-/// 内存缓存
+/// 記憶體快取 Memory cache
 @property (nonatomic, strong) NSMutableDictionary<NSString *, NSDictionary *> *loopCache;
 @end
 
 @implementation VODLoopConfigManager
 
-/// UserDefaults 存储的 key
+/// UserDefaults 儲存的 key UserDefaults storage key
 static NSString *const kVODLoopConfigCacheKey = @"VODLoopConfigManager.loopCache";
 
 - (instancetype)init {
@@ -27,7 +27,7 @@ static NSString *const kVODLoopConfigCacheKey = @"VODLoopConfigManager.loopCache
 
 #pragma mark - Private Methods
 
-/// 初始化缓存，确保内存缓存与 UserDefaults 同步
+/// 初始化快取，確保記憶體快取與 UserDefaults 同步 Initialize cache, ensure memory cache syncs with UserDefaults
 - (void)_initializeCacheIfNeeded {
     if (self.loopCache) { 
         return; 
@@ -37,7 +37,7 @@ static NSString *const kVODLoopConfigCacheKey = @"VODLoopConfigManager.loopCache
     self.loopCache = saved ? [saved mutableCopy] : [NSMutableDictionary dictionary];
 }
 
-/// 将URL规范化为缓存key（去除最后一个路径组件）
+/// 將 URL 規範化為快取鍵（去除最後一個路徑組件）Normalize URL to cache key (remove last path component)
 /// example:  https://vod-edge.hktvmall.com/shoaltervod/_definist_/smil:local/07a96b1f61097ccb54be14d6a47439b0/b056eb1587586b71e2da9acfe4fbd19e/6512bd43d9caa6e02c990b0a82652dca/1174b68b-5470-48a2-90b8-a8ba42323257/1174b68b-5470-48a2-90b8-a8ba42323257.smil/playlist.m3u8
 - (nullable NSString *)_normalizedKeyFromURL:(NSURL *)url {
     if (!url) { 
@@ -49,7 +49,7 @@ static NSString *const kVODLoopConfigCacheKey = @"VODLoopConfigManager.loopCache
     return components.URL.absoluteString;
 }
 
-/// 保存缓存到 UserDefaults
+/// 儲存快取到 UserDefaults Save cache to UserDefaults
 - (void)_saveCache {
     [[NSUserDefaults standardUserDefaults] setObject:self.loopCache forKey:kVODLoopConfigCacheKey];
     [[NSUserDefaults standardUserDefaults] synchronize];
@@ -96,11 +96,11 @@ static NSString *const kVODLoopConfigCacheKey = @"VODLoopConfigManager.loopCache
     NSString *key = [self _normalizedKeyFromURL:url];
     NSDictionary *oldDict = self.loopCache[key];
     
-    // 检查是否需要更新（对于整数类型，直接比较）
+    // 檢查是否需要更新（對於整數類型，直接比較）Check if update is needed (for integer types, direct comparison)
     if (oldDict &&
         [oldDict[@"startLoopTime"] integerValue] == startLoopTime &&
         [oldDict[@"loopDuration"] integerValue] == loopDuration) {
-        return; // 相同参数，跳过更新
+        return; // 相同參數，跳過更新 Same parameters, skip update
     }
     
     VODLoopConfig *config = [VODLoopConfig configWithStartTime:startLoopTime duration:loopDuration];

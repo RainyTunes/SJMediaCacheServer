@@ -9,28 +9,35 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+/**
+ * VOD 迴圈配置 VOD Loop Configuration
+ * 儲存 VOD 媒體的迴圈播放相關參數
+ * Stores loop playback related parameters for VOD media
+ */
 @interface VODLoopConfig : NSObject
 
-/// 循环开始时间（毫秒）
+/// 迴圈開始時間（毫秒）Loop start time (milliseconds)
 @property (nonatomic, assign) NSInteger startLoopTime;
 
-/// 循环持续时长（毫秒）
+/// 迴圈持續時長（毫秒）Loop duration (milliseconds)
 @property (nonatomic, assign) NSInteger loopDuration;
 
-/// 截取后的实际开始时间偏移（毫秒）
-/// 当VOD播放列表被截取时，实际保留的第一个片段开始时间与期望开始时间的差值
-/// 正值表示实际开始时间晚于期望时间，负值表示实际开始时间早于期望时间
+/// 截取後的實際開始時間偏移（毫秒）Actual start time offset after trimming (milliseconds)
+/// 當 VOD 播放清單被截取時，實際保留的第一個片段開始時間與期望開始時間的差值
+/// When VOD playlist is trimmed, the difference between actual first segment start time and expected start time
+/// 正值表示實際開始時間晚於期望時間，負值表示實際開始時間早於期望時間
+/// Positive value means actual start time is later than expected, negative value means earlier
 @property (nonatomic, assign) NSInteger actualStartTimeOffset;
 
-/// 便利构造器
-/// @param startTime 循环开始时间（毫秒）
-/// @param duration 循环持续时长（毫秒）
+/// 便利建構器 Convenience constructor
+/// @param startTime 迴圈開始時間（毫秒）Loop start time (milliseconds)
+/// @param duration 迴圈持續時長（毫秒）Loop duration (milliseconds)
 + (instancetype)configWithStartTime:(NSInteger)startTime duration:(NSInteger)duration;
 
-/// 从字典创建配置
+/// 從字典建立配置 Create config from dictionary
 + (nullable instancetype)configFromDictionary:(NSDictionary *)dict;
 
-/// 转换为字典（用于持久化）
+/// 轉換為字典（用於持久化）Convert to dictionary (for persistence)
 - (NSDictionary *)toDictionary;
 
 @end
