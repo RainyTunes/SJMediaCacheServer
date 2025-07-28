@@ -38,4 +38,15 @@ target 'SJMediaCacheServer_Example' do
   pod 'SJUIKit/SQLite3'#, :path => '/Users/bluedancer/Documents/GitHub/SJUIKit/SJUIKit.podspec'
   
 #  pod 'KTVHTTPCache'
+
+  target 'SJMediaCacheServer_Tests' do
+    inherit! :search_paths
+    # 单元测试框架
+    # XCTest 是系统自带的，不需要额外依赖
+    
+    # 如果需要Mock框架，可以添加：
+    # pod 'OCMock', '~> 3.9'
+    
+    # 测试target继承主target的所有依赖
+  end
 end

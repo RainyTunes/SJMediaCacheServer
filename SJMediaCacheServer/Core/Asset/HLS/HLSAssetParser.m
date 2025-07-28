@@ -13,7 +13,7 @@
 #import "MCSConsts.h"
 #import "MCSUtils.h"
 #import "NSArray+MCS.h"
-#import "RainyHLSHooker.h"
+#import "CustomPlaylistManager.h"
 
 // https://tools.ietf.org/html/rfc8216
 
@@ -321,7 +321,7 @@ static NSString *const HLS_CTX_LAST_INIT_END = @"HLS_CTX_LAST_INIT_END";
                     renditionSelectionHandler:(nullable HLSRenditionSelectionHandler)renditionSelectionHandler
                                         error:(out NSError **)errorPtr {
     NSString *_Nullable playlist = [NSString.alloc initWithData:rawData encoding:NSUTF8StringEncoding] ?: [NSString.alloc initWithData:rawData encoding:1];
-    playlist = [RainyHLSHooker hookPlaylist:playlist forOriginalURL:originalURL];
+    playlist = [[CustomPlaylistManager shared] processPlaylist:playlist forOriginalURL:originalURL];
     NSError *error = nil;
     if ( playlist == nil || ![playlist hasPrefix:@"#EXT"] ) {
         error = [NSError mcs_errorWithCode:MCSFileError userInfo:@{

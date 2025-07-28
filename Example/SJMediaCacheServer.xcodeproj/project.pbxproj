@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0E6AE78CAAB55577980DF7B8 /* libPods-SJMediaCacheServer_Tests.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5BE1145C1383D0CE4EDE7F39 /* libPods-SJMediaCacheServer_Tests.a */; };
 		3D3A5962E0F03F48714ECC02 /* libPods-SJMediaCacheServer_Example.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 6C9EB0F0D442524CE20AF77D /* libPods-SJMediaCacheServer_Example.a */; };
 		6003F58E195388D20070C39A /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6003F58D195388D20070C39A /* Foundation.framework */; };
 		6003F590195388D20070C39A /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6003F58F195388D20070C39A /* CoreGraphics.framework */; };
@@ -47,6 +48,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		014A18916FECE66784A7C4C7 /* Pods-SJMediaCacheServer_Tests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SJMediaCacheServer_Tests.release.xcconfig"; path = "Target Support Files/Pods-SJMediaCacheServer_Tests/Pods-SJMediaCacheServer_Tests.release.xcconfig"; sourceTree = "<group>"; };
 		1274DFD2FCE27CB01B3807BF /* SJMediaCacheServer.podspec */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; name = SJMediaCacheServer.podspec; path = ../SJMediaCacheServer.podspec; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.ruby; };
 		5BE1145C1383D0CE4EDE7F39 /* libPods-SJMediaCacheServer_Tests.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-SJMediaCacheServer_Tests.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		6003F58A195388D20070C39A /* SJMediaCacheServer_Example.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SJMediaCacheServer_Example.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -72,6 +74,7 @@
 		71719F9E1E33DC2100824A3D /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		774057C4264D55270042CCB7 /* SJDemoPlayerViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SJDemoPlayerViewController.h; sourceTree = "<group>"; };
 		774057C5264D55270042CCB7 /* SJDemoPlayerViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SJDemoPlayerViewController.m; sourceTree = "<group>"; };
+		775B353E8166A642E69FAFD2 /* Pods-SJMediaCacheServer_Tests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SJMediaCacheServer_Tests.debug.xcconfig"; path = "Target Support Files/Pods-SJMediaCacheServer_Tests/Pods-SJMediaCacheServer_Tests.debug.xcconfig"; sourceTree = "<group>"; };
 		77C33814264D2F6C00CBD3E2 /* SJDownloadsDemoViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SJDownloadsDemoViewController.h; sourceTree = "<group>"; };
 		77C33815264D2F6C00CBD3E2 /* SJDownloadsDemoViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SJDownloadsDemoViewController.m; sourceTree = "<group>"; };
 		77C3381C264D301000CBD3E2 /* SJDemoMediaModel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SJDemoMediaModel.h; sourceTree = "<group>"; };
@@ -116,6 +119,7 @@
 				6003F5B0195388D20070C39A /* XCTest.framework in Frameworks */,
 				6003F5B2195388D20070C39A /* UIKit.framework in Frameworks */,
 				6003F5B1195388D20070C39A /* Foundation.framework in Frameworks */,
+				0E6AE78CAAB55577980DF7B8 /* libPods-SJMediaCacheServer_Tests.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -127,6 +131,8 @@
 			children = (
 				A62B7547D90D17141E5579C3 /* Pods-SJMediaCacheServer_Example.debug.xcconfig */,
 				B54C6837CBAA07093C7830B7 /* Pods-SJMediaCacheServer_Example.release.xcconfig */,
+				775B353E8166A642E69FAFD2 /* Pods-SJMediaCacheServer_Tests.debug.xcconfig */,
+				014A18916FECE66784A7C4C7 /* Pods-SJMediaCacheServer_Tests.release.xcconfig */,
 			);
 			path = Pods;
 			sourceTree = "<group>";
@@ -299,6 +305,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 6003F5C2195388D20070C39A /* Build configuration list for PBXNativeTarget "SJMediaCacheServer_Tests" */;
 			buildPhases = (
+				F7FEA2F6594F4E8D2ED9A2E8 /* [CP] Check Pods Manifest.lock */,
 				6003F5AA195388D20070C39A /* Sources */,
 				6003F5AB195388D20070C39A /* Frameworks */,
 				6003F5AC195388D20070C39A /* Resources */,
@@ -417,6 +424,28 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-SJMediaCacheServer_Example/Pods-SJMediaCacheServer_Example-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		F7FEA2F6594F4E8D2ED9A2E8 /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-SJMediaCacheServer_Tests-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
@@ -628,6 +657,7 @@
 		};
 		6003F5C3195388D20070C39A /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 775B353E8166A642E69FAFD2 /* Pods-SJMediaCacheServer_Tests.debug.xcconfig */;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				FRAMEWORK_SEARCH_PATHS = (
@@ -652,6 +682,7 @@
 		};
 		6003F5C4195388D20070C39A /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 014A18916FECE66784A7C4C7 /* Pods-SJMediaCacheServer_Tests.release.xcconfig */;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				FRAMEWORK_SEARCH_PATHS = (
