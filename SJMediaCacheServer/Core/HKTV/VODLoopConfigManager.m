@@ -46,7 +46,10 @@ static NSString *const kVODLoopConfigCacheKey = @"VODLoopConfigManager.loopCache
     
     NSURLComponents *components = [NSURLComponents componentsWithURL:url resolvingAgainstBaseURL:NO];
     components.query = nil;
-    return components.URL.absoluteString;
+    NSURL *urlWithoutQuery = components.URL;
+        
+    NSURL *baseURL = [urlWithoutQuery URLByDeletingLastPathComponent];
+    return baseURL.absoluteString;
 }
 
 /// 儲存快取到 UserDefaults Save cache to UserDefaults
