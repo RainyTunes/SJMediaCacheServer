@@ -1,1 +1,1 @@
-../../../../../SJMediaCacheServer/VODLoopConfigManager.h
+../../../../../SJMediaCacheServer/Core/HKTV/VODLoopConfigManager.h
