@@ -23,9 +23,6 @@ NS_ASSUME_NONNULL_BEGIN
 /// 獲取指定 URL 的迴圈配置 Get loop configuration for specified URL
 - (nullable VODLoopConfig *)loopConfigForURL:(NSURL *)url;
 
-/// 儲存迴圈配置 Save loop configuration
-- (void)setLoopConfig:(VODLoopConfig *)config forURL:(NSURL *)url;
-
 /// 根據參數建立並儲存迴圈配置 Create and save loop configuration based on parameters
 /// @param url 媒體 URL Media URL
 /// @param startLoopTime 迴圈開始時間（毫秒）Loop start time (milliseconds)

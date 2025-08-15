@@ -6,10 +6,11 @@
 //
 
 #import "VODLoopConfigManager.h"
+#import "SafeMutableDictionary.h"
 
 @interface VODLoopConfigManager ()
-/// 記憶體快取 Memory cache
-@property (nonatomic, strong) NSMutableDictionary<NSString *, NSDictionary *> *loopCache;
+/// 記憶體快取 Memory cache (线程安全) Thread-safe memory cache
+@property (nonatomic, strong) SafeMutableDictionary<NSString *, NSDictionary *> *loopCache;
 @end
 
 @implementation VODLoopConfigManager
@@ -29,19 +30,19 @@ static NSString *const kVODLoopConfigCacheKey = @"VODLoopConfigManager.loopCache
 
 /// 初始化快取，確保記憶體快取與 UserDefaults 同步 Initialize cache, ensure memory cache syncs with UserDefaults
 - (void)_initializeCacheIfNeeded {
-    if (self.loopCache) { 
-        return; 
+    if (self.loopCache) {
+        return;
     }
     
     NSDictionary *saved = [[NSUserDefaults standardUserDefaults] dictionaryForKey:kVODLoopConfigCacheKey];
-    self.loopCache = saved ? [saved mutableCopy] : [NSMutableDictionary dictionary];
+    self.loopCache = [[SafeMutableDictionary alloc] initWithDictionary:saved];
 }
 
 /// 將 URL 規範化為快取鍵（去除最後一個路徑組件）Normalize URL to cache key (remove last path component)
 /// example:  https://vod-edge.hktvmall.com/shoaltervod/_definist_/smil:local/07a96b1f61097ccb54be14d6a47439b0/b056eb1587586b71e2da9acfe4fbd19e/6512bd43d9caa6e02c990b0a82652dca/1174b68b-5470-48a2-90b8-a8ba42323257/1174b68b-5470-48a2-90b8-a8ba42323257.smil/playlist.m3u8
 - (nullable NSString *)_normalizedKeyFromURL:(NSURL *)url {
-    if (!url) { 
-        return nil; 
+    if (!url) {
+        return nil;
     }
     
     NSURLComponents *components = [NSURLComponents componentsWithURL:url resolvingAgainstBaseURL:NO];
@@ -54,7 +55,7 @@ static NSString *const kVODLoopConfigCacheKey = @"VODLoopConfigManager.loopCache
 
 /// 儲存快取到 UserDefaults Save cache to UserDefaults
 - (void)_saveCache {
-    [[NSUserDefaults standardUserDefaults] setObject:self.loopCache forKey:kVODLoopConfigCacheKey];
+    [[NSUserDefaults standardUserDefaults] setObject:[self.loopCache copy] forKey:kVODLoopConfigCacheKey];
     [[NSUserDefaults standardUserDefaults] synchronize];
 }
 
@@ -76,18 +77,7 @@ static NSString *const kVODLoopConfigCacheKey = @"VODLoopConfigManager.loopCache
     return [VODLoopConfig configFromDictionary:dict];
 }
 
-- (void)setLoopConfig:(VODLoopConfig *)config forURL:(NSURL *)url {
-    if (!config || !url) {
-        return;
-    }
-    
-    [self _initializeCacheIfNeeded];
-    
-    NSString *key = [self _normalizedKeyFromURL:url];
-    self.loopCache[key] = [config toDictionary];
-    
-    [self _saveCache];
-}
+
 
 - (void)markVODLoop:(NSURL *)url startLoopTime:(NSInteger)startLoopTime loopDuration:(NSInteger)loopDuration {
     if (!url) {
@@ -107,14 +97,21 @@ static NSString *const kVODLoopConfigCacheKey = @"VODLoopConfigManager.loopCache
     }
     
     VODLoopConfig *config = [VODLoopConfig configWithStartTime:startLoopTime duration:loopDuration];
-    [self setLoopConfig:config forURL:url];
+    self.loopCache[key] = [config toDictionary];
+    [self _saveCache];
 }
 
 - (void)updateActualStartTimeOffset:(NSInteger)actualStartTimeOffset forURL:(NSURL *)url {
-    VODLoopConfig *config = [self loopConfigForURL:url];
+    [self _initializeCacheIfNeeded];
+    
+    NSString *key = [self _normalizedKeyFromURL:url];
+    NSDictionary *dict = self.loopCache[key];
+    VODLoopConfig *config = [VODLoopConfig configFromDictionary:dict];
+    
     if (config) {
         config.actualStartTimeOffset = actualStartTimeOffset;
-        [self setLoopConfig:config forURL:url];
+        self.loopCache[key] = [config toDictionary];
+        [self _saveCache];
     }
 }
 
